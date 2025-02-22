@@ -2,22 +2,30 @@ import React, { useState, useEffect } from 'react';
 import { View, FlatList, Text, ActivityIndicator } from 'react-native';
 import styles from '../styles';
 
-const HistoryScreen = () => {
+const HistoryScreen = ({ refresh, isActive }) => {
   const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetch('https://restful-booker.herokuapp.com/booking?checkin=2025-01-01&checkout=2025-05-01')
-      .then(response => response.json())
-      .then(json => {
+    const fetchData = async () => {
+      if (!isActive) return;
+      
+      console.log('Fetching data for History tab');
+      setLoading(true);
+      try {
+        const response = await fetch('https://restful-booker.herokuapp.com/booking?checkin=2024-01-01&checkout=2025-12-31');
+        const json = await response.json();
+        console.log('Data fetched successfully');
         setData(json);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
         setLoading(false);
-      })
-      .catch(error => {
-        console.error(error);
-        setLoading(false);
-      });
-  }, []);
+      }
+    };
+
+    fetchData();
+  }, [refresh, isActive]);
 
   const renderItem = ({ item, index }) => (
     <View style={styles.item}>
@@ -30,7 +38,11 @@ const HistoryScreen = () => {
       {loading ? (
         <ActivityIndicator size="large" color="#0000ff" />
       ) : (
-        <FlatList data={data} renderItem={renderItem} keyExtractor={item => item.bookingid.toString()} />
+        <FlatList 
+          data={data} 
+          renderItem={renderItem} 
+          keyExtractor={item => item.bookingid.toString()}
+        />
       )}
     </View>
   );
